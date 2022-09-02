@@ -1,4 +1,6 @@
 """Viewer application."""
+from __future__ import annotations
+
 import argparse
 import asyncio
 import json
@@ -10,7 +12,7 @@ import pygame
 import requests
 import websockets
 
-from common import Map, Coordinates
+from common import Coordinates, Map
 
 logging.basicConfig(level=logging.DEBUG)
 logger_websockets = logging.getLogger("websockets")
@@ -60,7 +62,7 @@ COLOR_MAP = {
 
 
 async def messages_handler(websocket_path, queue):
-    """Handles server side messages, putting them into a queue."""
+    """Handle server side messages, putting them into a queue."""
     async with websockets.connect(websocket_path) as websocket:
         await websocket.send(json.dumps({"cmd": "join"}))
 
@@ -76,7 +78,7 @@ def scale(pos):
 
 
 def draw_info(surface, text, pos, color=(0, 0, 0), background=None):
-    """Creates text based surfaces for information display."""
+    """Create text based surfaces for information display."""
     myfont = pygame.font.Font(None, int(24 / SCALE))
     textsurface = myfont.render(text, True, color, background)
 
@@ -97,7 +99,7 @@ def draw_info(surface, text, pos, color=(0, 0, 0), background=None):
 
 
 async def main_loop(queue):
-    """Processes events from server and display's."""
+    """Process events from server and display's."""
     win = pygame.display.set_mode((480 // SCALE, 320 // SCALE))
     pygame.display.set_caption("Rush Hour")
 

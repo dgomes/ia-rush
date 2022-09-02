@@ -1,4 +1,6 @@
 """Network Game Server."""
+from __future__ import annotations
+
 import argparse
 import asyncio
 import json
@@ -6,10 +8,12 @@ import logging
 import os.path
 import random
 from collections import namedtuple
+from typing import Any, Dict, Set
 
 import requests
 import websockets
 from requests import RequestException
+from websockets.legacy.protocol import WebSocketCommonProtocol
 
 from game import Game
 
@@ -31,13 +35,13 @@ MAX_HIGHSCORES = 10
 class GameServer:
     """Network Game Server."""
 
-    def __init__(self, level, timeout, seed=0, grading=None):
+    def __init__(self, level: int, timeout: int, seed: int = 0, grading: bool = None):
         """Initialize Gameserver."""
         self.seed = seed
         self.game = Game()
-        self.players = asyncio.Queue()
-        self.viewers = set()
-        self.current_player = None
+        self.players: asyncio.Queue[Player] = asyncio.Queue()
+        self.viewers: Set[WebSocketCommonProtocol] = set()
+        self.current_player: Player | None = None
         self.grading = grading
         self._level = level  # game level
         self._timeout = timeout  # timeout for game
@@ -48,8 +52,11 @@ class GameServer:
                 self._highscores = json.load(infile)
                 print(self._highscores)
 
-    def save_highscores(self, score):
+    def save_highscores(self, score: int):
         """Update highscores, storing to file."""
+        if not self.current_player:
+            raise Exception("Can't save highscores without current player")
+
         logger.debug("Save highscores")
         logger.info(
             "%s FINAL SCORE <%s>",
@@ -67,8 +74,11 @@ class GameServer:
         with open(HIGHSCORE_FILE, "w") as outfile:
             json.dump(self._highscores, outfile)
 
-    async def send_info(self, game_info, highscores=False):
+    async def send_info(self, game_info: Dict[str, Any], highscores: bool = False):
         """Send game info to viewer and player."""
+        if not self.current_player:
+            raise Exception("Will not send information if there isn't any current user")
+
         if highscores:
             game_info["highscores"] = self._highscores
             game_info["player"] = self.current_player.name
@@ -82,7 +92,7 @@ class GameServer:
 
         await self.current_player.ws.send(json.dumps(game_info))
 
-    async def incomming_handler(self, websocket, path):
+    async def incomming_handler(self, websocket: WebSocketCommonProtocol, path: str):
         """Process new clients arriving at the server."""
         try:
             async for message in websocket:
@@ -101,7 +111,11 @@ class GameServer:
                     game_info = self.game.info()
                     await websocket.send(json.dumps(game_info))
 
-                if data["cmd"] == "key" and self.current_player.ws == websocket:
+                if (
+                    data["cmd"] == "key"
+                    and self.current_player
+                    and self.current_player.ws == websocket
+                ):
                     logger.debug((self.current_player.name, data))
                     if len(data["key"]) > 0:
                         self.game.keypress(data["key"][0])

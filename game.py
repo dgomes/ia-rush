@@ -1,5 +1,9 @@
+"""Rush Hour Game Logic."""
+from __future__ import annotations
+
 import asyncio
 import logging
+from typing import Dict
 
 from common import Coordinates, Map, MapException
 
@@ -8,27 +12,28 @@ logger.setLevel(logging.DEBUG)
 
 GAME_SPEED = 10
 
-LEVEL = {}
-
+LEVEL: Dict[int, Map] = {}
 
 
 class Game:
-    def __init__(self, x=6, y=6) -> None:
+    """Main Class."""
+
+    def __init__(self, x: int = 6, y: int = 6) -> None:
         """Initialize Game."""
         logger.info("Game")
 
         self.levels = {}
-        with open(f"levels.txt", "r") as f:
+        with open("levels.txt", "r") as f:
             for lvl, map_str in enumerate(f.readlines(), start=1):
                 map = Map(map_str.strip())
-                self.levels[map.pieces] = map 
+                self.levels[map.pieces] = map
 
         self.dimensions = Coordinates(x, y)
         self.grid = None
 
         self.game_speed = GAME_SPEED
         self._running = True
-        self.cursor = Coordinates(self.dimensions.x/2, self.dimensions.y/2)
+        self.cursor = Coordinates(self.dimensions.x // 2, self.dimensions.y // 2)
 
         self.level = 0
         self._score = 0
@@ -44,7 +49,7 @@ class Game:
 
     @property
     def score(self):
-        """Current Score."""
+        """Return Current Score."""
         return self._score - self._step
 
     def stop(self):
@@ -55,9 +60,8 @@ class Game:
 
     def next_level(self):
         """Update all state variables to a new level."""
-
         # Score points from previous map
-        self._score = self.score + (self.grid.movements*2 if self.grid else 0)
+        self._score = self.score + (self.grid.movements * 2 if self.grid else 0)
 
         self.level += 1
         try:
@@ -76,6 +80,7 @@ class Game:
         self._selected = None
 
     def info(self):
+        """Return game state information."""
         return {
             "dimensions": (self.dimensions.x, self.dimensions.y),
             "level": self.level,
@@ -86,11 +91,12 @@ class Game:
             "selected": self._selected if self._selected else "",
         }
 
-    def keypress(self, key):
+    def keypress(self, key: str):
         """Update locally last key pressed."""
         self._lastkeypress = key
 
     async def loop(self):
+        """Run Main Game Loop."""
         if self._step % 100 == 0:
             logger.info("Loop %s - score: %s", self._step, self.score)
 
@@ -133,7 +139,10 @@ class Game:
                         self.grid.move(self._selected, Coordinates(1, 0))
                         self.cursor.x += 1
                         # Test victory:
-                        if self._selected == self.grid.player_car and self.grid.test_win():
+                        if (
+                            self._selected == self.grid.player_car
+                            and self.grid.test_win()
+                        ):
                             logger.info("Level %s COMPLETED", self.level)
                             self.next_level()
                 except MapException as exc:

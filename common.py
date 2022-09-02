@@ -1,3 +1,6 @@
+"""Common data structures. Can be used by any module."""
+from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 
@@ -5,6 +8,7 @@ from dataclasses import dataclass
 @dataclass
 class Coordinates:
     """Coordinates data class."""
+
     x: int
     y: int
 
@@ -14,11 +18,14 @@ class MapException(Exception):
 
 
 class Map:
+    """Representation of a map."""
+
     empty_tile = "o"
     wall_tile = "x"
     player_car = "A"
 
-    def __init__(self, txt):
+    def __init__(self, txt: str):
+        """Initialize Map from string."""
         pieces, grid, movements = txt.split(" ")
         self.pieces = int(pieces)
         self.movements = int(movements)
@@ -33,6 +40,7 @@ class Map:
                 line = []
 
     def __repr__(self):
+        """Revert map object to string."""
         raw = ""
         for line in self.grid:
             for column in line:
@@ -41,6 +49,7 @@ class Map:
 
     @property
     def coordinates(self):
+        """Representation of ocupied map positions through tuples x,y,value."""
         _coordinates = []
 
         for y, line in enumerate(self.grid):
@@ -51,14 +60,17 @@ class Map:
         return _coordinates
 
     def get(self, cursor: Coordinates):
+        """Return piece at cursor position."""
         if 0 <= cursor.x < self.grid_size and 0 <= cursor.y < self.grid_size:
             return self.grid[int(cursor.y)][int(cursor.x)]
         raise MapException("Out of the grid")
 
-    def piece_coordinates(self, piece):
+    def piece_coordinates(self, piece: str):
+        """List coordinates holding a piece."""
         return [Coordinates(x, y) for (x, y, p) in self.coordinates if p == piece]
 
-    def move(self, piece, direction: Coordinates):
+    def move(self, piece: str, direction: Coordinates):
+        """Move piece in direction fiven by a vector."""
         piece_coord = self.piece_coordinates(piece)
 
         # Don't move vertical pieces sideways
@@ -68,7 +80,7 @@ class Map:
         if direction.y != 0 and any([line.count(piece) > 1 for line in self.grid]):
             raise MapException("Can't move up-down")
 
-        def sum(a, b):
+        def sum(a: Coordinates, b: Coordinates):
             return Coordinates(a.x + b.x, a.y + b.y)
 
         for pos in piece_coord:
@@ -83,6 +95,7 @@ class Map:
             self.grid[new_pos.y][new_pos.x] = piece
 
     def test_win(self):
+        """Test if player_car has crossed the left most column."""
         return any(
             [c.x == self.grid_size - 1 for c in self.piece_coordinates(self.player_car)]
         )
