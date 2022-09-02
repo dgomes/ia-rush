@@ -10,7 +10,7 @@ import pygame
 import requests
 import websockets
 
-from common import Dimensions, Map
+from common import Map, Coordinates
 
 logging.basicConfig(level=logging.DEBUG)
 logger_websockets = logging.getLogger("websockets")
@@ -19,10 +19,14 @@ logger_websockets.setLevel(logging.WARN)
 logger = logging.getLogger("Viewer")
 logger.setLevel(logging.DEBUG)
 
+VIEW_HIGHSCORES = 5
+
 BLOCK_SIDE = 30
 BLOCK_SIZE = BLOCK_SIDE, BLOCK_SIDE
 
 COLORS = {
+    "background": (50, 50, 50),
+    "black": (0, 0, 0),
     "white": (255, 255, 255),
     "red": (255, 0, 0),
     "pink": (255, 105, 180),
@@ -33,7 +37,26 @@ COLORS = {
     "green": (0, 240, 0),
 }
 
-COLOR_MAP = dict()
+COLOR_MAP = {
+    "cursor": COLORS["black"],
+    "cursor_selected": COLORS["white"],
+    "background": (50, 50, 50),
+    "info": COLORS["white"],
+    "info_title": (255, 165, 0),
+    "x": COLORS["pink"],
+    "A": COLORS["red"],  # Our car is always the red one
+    "B": (0xC0, 0xC0, 0xC0),
+    "C": (0x2F, 0x4F, 0x4F),
+    "D": (0x2E, 0x8B, 0x57),
+    "E": (0x7F, 0x0, 0x0),
+    "F": (0x80, 0x80, 0x0),
+    "G": (0x00, 0x0, 0x80),
+    "H": (0xFF, 0x8C, 0x0),
+    "I": (0xFF, 0xD7, 0x0),
+    "J": (0x7C, 0xFC, 0x0),
+    "K": (0x0, 0xFA, 0x9A),
+    "L": (0x41, 0x69, 0xE1),
+}
 
 
 async def messages_handler(websocket_path, queue):
@@ -67,7 +90,7 @@ def draw_info(surface, text, pos, color=(0, 0, 0), background=None):
         surface.blit(background, pos)
     else:
         erase = pygame.Surface(textsurface.get_size())
-        erase.fill(COLORS["grey"])
+        erase.fill(COLOR_MAP["background"])
 
     surface.blit(textsurface, pos)
     return textsurface.get_width(), textsurface.get_height()
@@ -75,7 +98,7 @@ def draw_info(surface, text, pos, color=(0, 0, 0), background=None):
 
 async def main_loop(queue):
     """Processes events from server and display's."""
-    win = pygame.display.set_mode((600 // SCALE, 1000 // SCALE))
+    win = pygame.display.set_mode((480 // SCALE, 320 // SCALE))
     pygame.display.set_caption("Rush Hour")
 
     logging.info("Waiting for map information from server")
@@ -86,32 +109,56 @@ async def main_loop(queue):
 
     win.fill((0, 0, 0))
 
-    def draw_blocks(grid, cursor, x_offset=0, y_offset=0):
-        for x, y, piece in Map(grid).coordinates:
+    def draw_blocks(game_size, grid, cursor, selected, x_offset=0, y_offset=0):
+        pygame.draw.rect(
+            win,
+            COLOR_MAP["background"],
+            (
+                x_offset * game_size.x * BLOCK_SIDE / SCALE,
+                y_offset * game_size.y * BLOCK_SIDE / SCALE,
+                game_size.x * BLOCK_SIDE / SCALE,
+                game_size.y * BLOCK_SIDE / SCALE,
+            ),
+            0,
+        )
+
+        for x, y, piece in grid.coordinates:
 
             if piece not in COLOR_MAP:
                 COLOR_MAP[piece] = [
-                    random.randint(25, 255),
-                    random.randint(25, 255),
-                    random.randint(25, 255),
+                    random.randint(90, 255),
+                    random.randint(90, 255),
+                    random.randint(90, 255),
                 ]
 
-            pygame.draw.rect(
-                win,
-                COLOR_MAP[piece],
-                (
-                    (x + x_offset) * BLOCK_SIDE / SCALE,
-                    (y + y_offset) * BLOCK_SIDE / SCALE,
-                    BLOCK_SIDE / SCALE,
-                    BLOCK_SIDE / SCALE,
-                ),
-                0,
-            )
+            if piece == "x":
+                pygame.draw.circle(
+                    win,
+                    COLOR_MAP[piece],
+                    (
+                        (x + x_offset) * BLOCK_SIDE / SCALE + BLOCK_SIDE / SCALE / 2,
+                        (y + y_offset) * BLOCK_SIDE / SCALE + BLOCK_SIDE / SCALE / 2,
+                    ),
+                    BLOCK_SIDE / SCALE / 2 - 2,
+                    0,
+                )
+            else:
+                pygame.draw.rect(
+                    win,
+                    COLOR_MAP[piece],
+                    (
+                        (x + x_offset) * BLOCK_SIDE / SCALE,
+                        (y + y_offset) * BLOCK_SIDE / SCALE,
+                        BLOCK_SIDE / SCALE,
+                        BLOCK_SIDE / SCALE,
+                    ),
+                    0,
+                )
 
-        cur = Dimensions(*cursor)
+        cur = Coordinates(*cursor)
         pygame.draw.rect(
             win,
-            COLORS["white"],
+            COLOR_MAP["cursor_selected"] if selected else COLOR_MAP["cursor"],
             (
                 (cur.x + x_offset) * BLOCK_SIDE / SCALE,
                 (cur.y + y_offset) * BLOCK_SIDE / SCALE,
@@ -121,9 +168,11 @@ async def main_loop(queue):
             4,
         )
 
-    dimensions = Dimensions(*newgame_json["dimensions"])
+    dimensions = Coordinates(*newgame_json["dimensions"])
 
-    draw_blocks(newgame_json["grid"], newgame_json["cursor"])
+    grid = Map(newgame_json["grid"])
+
+    draw_blocks(dimensions, grid, newgame_json["cursor"], False)
 
     game_speed = newgame_json["game_speed"]
 
@@ -136,6 +185,8 @@ async def main_loop(queue):
 
         try:
             state = json.loads(queue.get_nowait())
+            if "level" in state:
+                level = state["level"]
             if "score" in state:
                 score = state["score"]
             if "player" in state:
@@ -150,7 +201,6 @@ async def main_loop(queue):
                 logging.debug("Final game status: %s", state)
 
                 if GLOBAL_HIGHSCORES:
-                    print("FUCK")
                     highscores = [
                         [highscore["player"], highscore["score"]]
                         for highscore in requests.get(GLOBAL_HIGHSCORES).json()
@@ -161,33 +211,48 @@ async def main_loop(queue):
                     state["highscores"].append([player_name, score])
                     state["highscores"].sort(key=lambda h: h[1], reverse=True)
 
-                draw_info(win, "HIGHSCORES", scale((5, 5)), COLORS["blue"])
+                draw_info(
+                    win,
+                    "HIGHSCORES",
+                    (win.get_width() / 4, win.get_height() / 8),
+                    COLOR_MAP["info_title"],
+                )
                 for idx, [name, sc] in enumerate(state["highscores"]):
+                    if idx >= VIEW_HIGHSCORES:
+                        break
+
                     draw_info(
                         win,
                         f"{sc:>05}    {name:<24}",
-                        scale((5, 6 + idx)),
-                        COLORS["orange"]
+                        (
+                            win.get_width() / 4,
+                            win.get_height() / 8 + BLOCK_SIDE * (1 + idx),
+                        ),
+                        COLOR_MAP["info_title"]
                         if [player_name, score] == [name, sc]
-                        else COLORS["white"],
+                        else COLOR_MAP["info"],
                     )
                 continue
 
             logger.info(state)
-            draw_blocks(state["grid"], state["cursor"])
+            grid = Map(state["grid"])
+            draw_blocks(dimensions, grid, state["cursor"], state["selected"] != "")
 
-            draw_info(
-                win,
-                f"{player_name}",
-                scale((dimensions.x + 1, dimensions.y - 1)),
-                COLORS["white"],
-            )
-            draw_info(
-                win,
-                f"SCORE: {score}",
-                scale((dimensions.x + 1, dimensions.y)),
-                COLORS["white"],
-            )
+            cursor = Coordinates(*state["cursor"])
+
+            information = [
+                (f"LEVEL: {level}", 1, COLOR_MAP["info"]),
+                (f"SCORE: {score}", 2, COLOR_MAP["info"]),
+                (f"PIECE: {grid.get(cursor)}", 3, COLOR_MAP["info"]),
+            ]
+
+            for txt, line, color in information:
+                draw_info(
+                    win,
+                    txt,
+                    scale((dimensions.x + 1, line)),
+                    color,
+                )
 
         except asyncio.queues.QueueEmpty:
             await asyncio.sleep(1.0 / game_speed)
@@ -224,9 +289,10 @@ if __name__ == "__main__":
     pygame.font.init()
 
     async def main():
+        """Start viewer tasks."""
         q = asyncio.Queue()
-        # PROGRAM_ICON = pygame.image.load("data/tetris_block.png")
-        # pygame.display.set_icon(PROGRAM_ICON)
+        PROGRAM_ICON = pygame.image.load("data/icon.jpeg")
+        pygame.display.set_icon(PROGRAM_ICON)
 
         ws_path = f"ws://{arguments.server}:{arguments.port}/viewer"
 

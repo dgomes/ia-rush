@@ -6,8 +6,6 @@ import logging
 import os.path
 import random
 from collections import namedtuple
-from functools import reduce
-from operator import add
 
 import requests
 import websockets
@@ -34,6 +32,7 @@ class GameServer:
     """Network Game Server."""
 
     def __init__(self, level, timeout, seed=0, grading=None):
+        """Initialize Gameserver."""
         self.seed = seed
         self.game = Game()
         self.players = asyncio.Queue()
@@ -74,11 +73,12 @@ class GameServer:
             game_info["highscores"] = self._highscores
             game_info["player"] = self.current_player.name
 
-        for client in self.viewers:
+        for viewer in self.viewers:
             try:
-                await client.send(json.dumps(game_info))
-            except:
-                self.viewers.remove(client)
+                await viewer.send(json.dumps(game_info))
+            except Exception:
+                self.viewers.remove(viewer)
+                break
 
         await self.current_player.ws.send(json.dumps(game_info))
 
@@ -87,7 +87,7 @@ class GameServer:
         try:
             async for message in websocket:
                 data = json.loads(message)
-                if not "cmd" in data:
+                if "cmd" not in data:
                     continue
                 if data["cmd"] == "join":
                     if path == "/player":
@@ -114,7 +114,7 @@ class GameServer:
                 self.viewers.remove(websocket)
 
     async def mainloop(self):
-        """Main loop, runing the Game."""
+        """Run the game."""
         while True:
             logger.info("Waiting for player")
             self.current_player = await self.players.get()
@@ -134,7 +134,7 @@ class GameServer:
                 await self.send_info(game_info)
 
                 if self.grading:
-                    game_record = dict()
+                    game_record = {}
                     game_record["player"] = self.current_player.name
 
                 while self.game.running:
@@ -145,11 +145,12 @@ class GameServer:
 
                     await self.current_player.ws.send(state)
 
-                    for client in self.viewers:
+                    for viewer in self.viewers:
                         try:
-                            await client.send(state)
-                        except:
-                            self.viewers.remove(client)
+                            await viewer.send(state)
+                        except Exception:
+                            self.viewers.remove(viewer)
+                            break
 
                 self.save_highscores(self.game.score)
 
@@ -189,6 +190,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     async def main():
+        """Start server tasks."""
         g = GameServer(0, -1, args.seed, args.grading_server)
 
         game_loop_task = asyncio.ensure_future(g.mainloop())

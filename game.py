@@ -1,37 +1,41 @@
 import asyncio
 import logging
-import random
-from asyncio.queues import Queue
-from collections import Counter
-from copy import deepcopy
 
-from common import Coordinates, Dimensions, Map, MapException
-from shape import SHAPES
+from common import Coordinates, Map, MapException
 
 logger = logging.getLogger("Game")
 logger.setLevel(logging.DEBUG)
 
 GAME_SPEED = 10
-SPEED_STEP = 10  # points
+
+LEVEL = {}
+
 
 
 class Game:
     def __init__(self, x=6, y=6) -> None:
+        """Initialize Game."""
         logger.info("Game")
-        self.dimensions = Dimensions(x, y)
-        self.current_piece = None
 
-        self.grid = Map("02 ooooBoooooBoAAooBooooooooooooooooooo 14")
+        self.levels = {}
+        with open(f"levels.txt", "r") as f:
+            for lvl, map_str in enumerate(f.readlines(), start=1):
+                map = Map(map_str.strip())
+                self.levels[map.pieces] = map 
+
+        self.dimensions = Coordinates(x, y)
+        self.grid = None
+
         self.game_speed = GAME_SPEED
         self._running = True
-        self.cursor = Dimensions(x / 3, y / 3)
+        self.cursor = Coordinates(self.dimensions.x/2, self.dimensions.y/2)
 
+        self.level = 0
+        self._score = 0
+        self._total_steps = 0
         self._step = 0
-        self._timeout = 1000
 
-        self._selected = None
-
-        self._lastkeypress = "-"
+        self.next_level()
 
     @property
     def running(self):
@@ -40,17 +44,41 @@ class Game:
 
     @property
     def score(self):
-        return self._timeout - self._step + self.grid.movements
+        """Current Score."""
+        return self._score - self._step
 
     def stop(self):
         """Stop the game."""
         if self._step:
-            logger.info("GAME OVER at %s", self._step)
+            logger.info("GAME OVER at step %s - score %s", self._step, self.score)
         self._running = False
+
+    def next_level(self):
+        """Update all state variables to a new level."""
+
+        # Score points from previous map
+        self._score = self.score + (self.grid.movements*2 if self.grid else 0)
+
+        self.level += 1
+        try:
+            self.grid = self.levels[self.level]
+            logger.info("NEXT LEVEL: %s", self.level)
+        except KeyError:
+            logger.info("No more levels... You WIN!")
+            self.stop()
+            return
+
+        self._total_steps += self._step
+        self._step = 0
+        self._timeout = self.grid.movements + GAME_SPEED * 60
+
+        self._lastkeypress = "-"
+        self._selected = None
 
     def info(self):
         return {
             "dimensions": (self.dimensions.x, self.dimensions.y),
+            "level": self.level,
             "grid": str(self.grid),
             "score": self.score,
             "game_speed": self.game_speed,
@@ -63,7 +91,8 @@ class Game:
         self._lastkeypress = key
 
     async def loop(self):
-        logger.info("Loop %s - score: %s", self._step, self.score)
+        if self._step % 100 == 0:
+            logger.info("Loop %s - score: %s", self._step, self.score)
 
         await asyncio.sleep(1.0 / GAME_SPEED)
 
@@ -75,13 +104,15 @@ class Game:
             if self._selected is None:
                 logger.debug("Select %s", self.grid.get(self.cursor))
                 self._selected = self.grid.get(self.cursor)
+                if self._selected in [self.grid.wall_tile, self.grid.empty_tile]:
+                    logger.debug("Can't move %s", self._selected)
+                    self._selected = None
             else:
                 logger.debug("UnSelect")
                 self._selected = None
 
         elif self._lastkeypress in "wasd":
             if self._selected:
-                logger.debug("move piece")
                 try:
                     if self._lastkeypress == "w" and self.cursor.y > 0:
                         self.grid.move(self._selected, Coordinates(0, -1))
@@ -102,13 +133,12 @@ class Game:
                         self.grid.move(self._selected, Coordinates(1, 0))
                         self.cursor.x += 1
                         # Test victory:
-                        if self._selected == "A" and self.grid.test_win():
-                            logger.info("You win!")
-                            self.stop()
+                        if self._selected == self.grid.player_car and self.grid.test_win():
+                            logger.info("Level %s COMPLETED", self.level)
+                            self.next_level()
                 except MapException as exc:
                     logger.error("Can't move %s: %s", self._selected, exc)
             else:
-                logger.debug("move cursor")
                 if self._lastkeypress == "w" and self.cursor.y > 0:
                     self.cursor.y -= 1
                 elif self._lastkeypress == "a" and self.cursor.x > 0:

@@ -1,16 +1,12 @@
 import math
 from dataclasses import dataclass
 
-SPACE = " "
-
 
 @dataclass
 class Coordinates:
+    """Coordinates data class."""
     x: int
     y: int
-
-
-Dimensions = Coordinates
 
 
 class MapException(Exception):
@@ -18,6 +14,10 @@ class MapException(Exception):
 
 
 class Map:
+    empty_tile = "o"
+    wall_tile = "x"
+    player_car = "A"
+
     def __init__(self, txt):
         pieces, grid, movements = txt.split(" ")
         self.pieces = int(pieces)
@@ -45,7 +45,7 @@ class Map:
 
         for y, line in enumerate(self.grid):
             for x, column in enumerate(line):
-                if column != "o":
+                if column != self.empty_tile:
                     _coordinates.append((x, y, column))
 
         return _coordinates
@@ -72,19 +72,20 @@ class Map:
             return Coordinates(a.x + b.x, a.y + b.y)
 
         for pos in piece_coord:
-            if not self.get(sum(pos, direction)) in [piece, "o"]:
-                print(self.get(sum(pos, direction)))
+            if not self.get(sum(pos, direction)) in [piece, self.empty_tile]:
                 raise MapException("Blocked piece")
 
         for pos in piece_coord:
-            self.grid[pos.y][pos.x] = "o"
+            self.grid[pos.y][pos.x] = self.empty_tile
 
         for pos in piece_coord:
             new_pos = sum(pos, direction)
             self.grid[new_pos.y][new_pos.x] = piece
 
     def test_win(self):
-        return any([c.x == self.grid_size - 1 for c in self.piece_coordinates("A")])
+        return any(
+            [c.x == self.grid_size - 1 for c in self.piece_coordinates(self.player_car)]
+        )
 
 
 """ TODO move to tests

@@ -1,3 +1,4 @@
+"""Example client."""
 import asyncio
 import getpass
 import json
@@ -8,11 +9,12 @@ import pygame
 import websockets
 
 pygame.init()
-# program_icon = pygame.image.load("data/icon2.png")
-# pygame.display.set_icon(program_icon)
+program_icon = pygame.image.load("data/icon2.png")
+pygame.display.set_icon(program_icon)
 
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
+    """Example client loop."""
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
 
         # Receive information about static game properties
@@ -20,8 +22,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
         # Next 3 lines are not needed for AI agent
         SCREEN = pygame.display.set_mode((299, 123))
-        # SPRITES = pygame.image.load("data/pad.png").convert_alpha()
-        # SCREEN.blit(SPRITES, (0, 0))
+        SPRITES = pygame.image.load("data/pad.png").convert_alpha()
+        SCREEN.blit(SPRITES, (0, 0))
 
         while True:
             try:
