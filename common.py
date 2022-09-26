@@ -71,6 +71,9 @@ class Map:
 
     def move(self, piece: str, direction: Coordinates):
         """Move piece in direction fiven by a vector."""
+        if piece == wall_tile:
+            raise MapException("Blocked piece")
+
         piece_coord = self.piece_coordinates(piece)
 
         # Don't move vertical pieces sideways

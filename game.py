@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import random
 from typing import Dict
 
 from common import Coordinates, Map, MapException
@@ -11,6 +12,7 @@ logger = logging.getLogger("Game")
 logger.setLevel(logging.DEBUG)
 
 GAME_SPEED = 10
+CRAZY_STEP = 10
 
 LEVEL: Dict[int, Map] = {}
 
@@ -105,6 +107,15 @@ class Game:
         self._step += 1
         if self._step >= self._timeout:
             self.stop()
+
+        if self._step % CRAZY_STEP == 0:
+            try:
+                _, _, random_piece = random.choice(self.grid.coordinates)
+                random_direction = random.choice([Coordinates(0,-1), Coordinates(0, 1), Coordinates(-1, 0), Coordinates(1, 0)])
+                self.grid.move(random_piece, random_direction)
+                logger.debug("Crazy driver: %s moved %s", random_piece, random_direction)
+            except MapException:
+                pass
 
         if self._lastkeypress == " ":  # Toggle
             if self._selected is None:
