@@ -112,7 +112,12 @@ class Game:
             try:
                 _, _, random_piece = random.choice(self.grid.coordinates)
                 random_direction = random.choice([Coordinates(0,-1), Coordinates(0, 1), Coordinates(-1, 0), Coordinates(1, 0)])
-                self.grid.move(random_piece, random_direction)
+                
+                # tries to move the piece, if it does and that piece is selected that the cursor will follow
+                if self.grid.move(random_piece, random_direction) and self._selected == random_piece:
+                    self.cursor = Coordinates(self.cursor.x + random_direction.x, self.cursor.y + random_direction.y)
+
+                
                 logger.debug("Crazy driver: %s moved %s", random_piece, random_direction)
             except MapException:
                 pass
