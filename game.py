@@ -112,8 +112,11 @@ class Game:
             try:
                 _, _, random_piece = random.choice(self.grid.coordinates)
                 random_direction = random.choice([Coordinates(0,-1), Coordinates(0, 1), Coordinates(-1, 0), Coordinates(1, 0)])
-                self.grid.move(random_piece, random_direction)
-                logger.debug("Crazy driver: %s moved %s", random_piece, random_direction)
+                
+                # Crazy driver movement is only applciable to cars not selected by the cursor
+                if self._selected != random_piece:
+                    self.grid.move(random_piece, random_direction)
+                    logger.debug("Crazy driver: %s moved %s", random_piece, random_direction)
             except MapException:
                 pass
 
