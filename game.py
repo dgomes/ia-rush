@@ -110,10 +110,16 @@ class Game:
 
         if self._step % CRAZY_STEP == 0:
             try:
-                _, _, random_piece = random.choice(self.grid.coordinates)
-                random_direction = random.choice([Coordinates(0,-1), Coordinates(0, 1), Coordinates(-1, 0), Coordinates(1, 0)])
-                self.grid.move(random_piece, random_direction)
-                logger.debug("Crazy driver: %s moved %s", random_piece, random_direction)
+                if len(list(set([x[2] for x in self.grid.coordinates]))) == 1 and self._selected != None:
+                    logger.debug("Can't do crazy driver !")
+                    
+                else:
+                    _, _, random_piece = random.choice(self.grid.coordinates)
+                    while self._selected == random_piece:
+                        _, _, random_piece = random.choice(self.grid.coordinates)
+                    random_direction = random.choice([Coordinates(0,-1), Coordinates(0, 1), Coordinates(-1, 0), Coordinates(1, 0)])
+                    self.grid.move(random_piece, random_direction)
+                    logger.debug("Crazy driver: %s moved %s", random_piece, random_direction)
             except MapException:
                 pass
 
