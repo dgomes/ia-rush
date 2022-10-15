@@ -114,6 +114,9 @@ class Game:
                 random_direction = random.choice([Coordinates(0,-1), Coordinates(0, 1), Coordinates(-1, 0), Coordinates(1, 0)])
                 self.grid.move(random_piece, random_direction)
                 logger.debug("Crazy driver: %s moved %s", random_piece, random_direction)
+                if random_piece == self._selected:
+                    self.cursor.x += random_direction.x
+                    self.cursor.y += random_direction.y
             except MapException:
                 pass
 
