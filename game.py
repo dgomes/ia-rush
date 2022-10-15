@@ -149,13 +149,6 @@ class Game:
                     ):
                         self.grid.move(self._selected, Coordinates(1, 0))
                         self.cursor.x += 1
-                        # Test victory:
-                        if (
-                            self._selected == self.grid.player_car
-                            and self.grid.test_win()
-                        ):
-                            logger.info("Level %s COMPLETED", self.level)
-                            self.next_level()
                 except MapException as exc:
                     logger.error("Can't move %s: %s", self._selected, exc)
             else:
@@ -171,6 +164,11 @@ class Game:
                     self._lastkeypress == "d" and self.cursor.x + 1 < self.dimensions.x
                 ):
                     self.cursor.x += 1
+
+        # Test victory:
+        if self.grid.test_win():
+            logger.info("Level %s COMPLETED", self.level)
+            self.next_level()
 
         self._lastkeypress = "-"
 
