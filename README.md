@@ -1,4 +1,4 @@
-# ia-tetris
+# ia-rush
 Projecto de Inteligência Artificial 2022 - Rush Hour
 
 ## How to install
