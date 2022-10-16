@@ -185,7 +185,6 @@ async def main_loop(queue):
     while True:
         pygame.display.update()
 
-        pygame.event.pump()
         for event in pygame.event.get():
             if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 pygame.quit()
