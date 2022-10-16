@@ -108,6 +108,9 @@ class GameServer:
                         logger.info("Viewer connected")
                         self.viewers.add(websocket)
 
+                game_info = self.game.info()
+                await websocket.send(json.dumps(game_info))
+
                 if (
                     data["cmd"] == "key"
                     and self.current_player
@@ -123,6 +126,8 @@ class GameServer:
             logger.info("Client disconnected: %s", closed_reason)
             if websocket in self.viewers:
                 self.viewers.remove(websocket)
+            if self.current_player and self.current_player.ws == websocket:
+                self.current_player = await self.players.get()
 
     async def mainloop(self):
         """Run the game."""
