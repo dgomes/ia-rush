@@ -98,18 +98,12 @@ def draw_info(surface, text, pos, color=(0, 0, 0), background=None):
     return textsurface.get_width(), textsurface.get_height()
 
 
-def print_waiting_message(surface):
-    """Print a waiting message."""
-    draw_info(surface, "Waiting for server to start a new game", (0, surface.get_height() / 8), COLORS["white"])
-    draw_info(surface, "Please run the student.py file to start", (0, surface.get_height() / 8 + 24 / SCALE), COLORS["white"])
-
-
 async def main_loop(queue):
     """Process events from server and display's."""
     win = pygame.display.set_mode((480 // SCALE, 320 // SCALE))
     pygame.display.set_caption("Rush Hour - WAITING FOR GAME TO START")
 
-    print_waiting_message(win)
+    draw_info(win, "Waiting for server to start a new game", (0, win.get_height() / 8), COLORS["white"])
     pygame.display.update()
 
     logging.info("Waiting for map information from server")
@@ -186,7 +180,7 @@ async def main_loop(queue):
     draw_blocks(dimensions, grid, newgame_json["cursor"], False)
 
     game_speed = newgame_json["game_speed"]
-    pygame.display.set_caption("Rush Hour - GAME STARTED")
+    pygame.display.set_caption("Rush Hour")
 
     while True:
         pygame.display.update()
