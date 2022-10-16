@@ -101,7 +101,10 @@ def draw_info(surface, text, pos, color=(0, 0, 0), background=None):
 async def main_loop(queue):
     """Process events from server and display's."""
     win = pygame.display.set_mode((480 // SCALE, 320 // SCALE))
-    pygame.display.set_caption("Rush Hour")
+    pygame.display.set_caption("Rush Hour - WAITING FOR GAME TO START")
+
+    draw_info(win, "Waiting for server to start a new game", (0, win.get_height() / 8), COLORS["white"])
+    pygame.display.update()
 
     logging.info("Waiting for map information from server")
     state = await queue.get()  # first state message includes map information
@@ -177,13 +180,15 @@ async def main_loop(queue):
     draw_blocks(dimensions, grid, newgame_json["cursor"], False)
 
     game_speed = newgame_json["game_speed"]
+    pygame.display.set_caption("Rush Hour")
 
     while True:
         pygame.display.update()
 
-        pygame.event.pump()
-        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
-            asyncio.get_event_loop().stop()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                return
 
         try:
             state = json.loads(queue.get_nowait())
