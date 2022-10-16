@@ -188,7 +188,7 @@ async def main_loop(queue):
         for event in pygame.event.get():
             if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 pygame.quit()
-                asyncio.get_event_loop().stop()
+                return
 
         try:
             state = json.loads(queue.get_nowait())
