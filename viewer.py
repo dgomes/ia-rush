@@ -188,34 +188,11 @@ async def main_loop(queue):
         for event in pygame.event.get():
             if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 pygame.quit()
-                os.remove("scoresTemp.txt") 
                 return
 
         try:
             state = json.loads(queue.get_nowait())
             if "level" in state:
-                if 'level' in  locals():
-                    if state['level'] != level:
-                        s = state["score"]
-                        try:
-                            with open("scoresTemp.txt", 'a') as f:
-                                f.write(f"{level}-{s}\n")
-                            with open("highScoreLevels.txt", 'r') as f:
-                                delta = f.readlines()
-                                if len(delta)>=level:
-                                    delta = s - int(delta[level-1].split('-')[1]) 
-                                else:
-                                    delta = "No data yet"
-                        except IOError:
-                            delta = "No data yet"
-                else:
-                    s = state["score"]
-                    try:
-                        open("scoresTemp.txt", 'w').close()
-                        with open("highScoreLevels.txt", 'r') as f:
-                            delta = 0
-                    except IOError:
-                        delta = "No data yet"
                 level = state["level"]
             if "score" in state:
                 score = state["score"]
@@ -223,6 +200,8 @@ async def main_loop(queue):
                 player_name = state["player"]
             if "game_speed" in state:
                 game_speed = state["game_speed"]
+            if "delta" in state:
+                delta = state["delta"]
 
             win.fill((0, 0, 0))
 
@@ -246,15 +225,6 @@ async def main_loop(queue):
                     (win.get_width() / 4, win.get_height() / 8),
                     COLOR_MAP["info_title"],
                 )
-
-                if state["highscores"][0] == [player_name, score]:
-                    f1 = open("highScoreLevels.txt", 'a')
-                    f2 = open("scoresTemp.txt", 'r')
-                    data = f2.readlines()
-                    for line in data:
-                        f1.write(line)
-                    f1.close()
-                    f2.close()
 
                 for idx, [name, sc] in enumerate(state["highscores"]):
                     if idx >= VIEW_HIGHSCORES:

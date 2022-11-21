@@ -12,7 +12,7 @@ logger = logging.getLogger("Game")
 logger.setLevel(logging.DEBUG)
 
 GAME_SPEED = 10
-CRAZY_STEP = 10
+CRAZY_STEP = 1000
 
 LEVEL: Dict[int, Map] = {}
 
@@ -41,6 +41,7 @@ class Game:
         self._score = 0
         self._total_steps = 0
         self._step = 0
+        self.delta = 0
 
         self.next_level()
 
@@ -74,6 +75,18 @@ class Game:
             self.stop()
             return
 
+        try:
+            with open("scoresTemp.txt", 'a') as f:
+                f.write(f"{self.level} {self.score}\n")
+            with open("highScoreLevels.txt", 'r') as f:
+                delta = f.readlines()
+                if len(delta)>=self.level-1:
+                    self.delta = self.score - int(delta[self.level-1].split(' ')[1]) 
+                else:
+                    self.delta = "No data yet"
+        except IOError:
+            self.delta = "No data yet"
+
         self._total_steps += self._step
         self._step = 0
         self._timeout = self.grid.movements + GAME_SPEED * 60
@@ -91,6 +104,7 @@ class Game:
             "game_speed": self.game_speed,
             "cursor": (self.cursor.x, self.cursor.y),
             "selected": self._selected if self._selected else "",
+            "delta": self.delta
         }
 
     def keypress(self, key: str):

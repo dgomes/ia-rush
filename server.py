@@ -47,6 +47,7 @@ class GameServer:
         self._timeout = timeout  # timeout for game
 
         self._highscores = []
+        open("scoresTemp.txt", 'w').close()
         if os.path.isfile(HIGHSCORE_FILE):
             with open(HIGHSCORE_FILE, "r") as infile:
                 self._highscores = json.load(infile)
@@ -71,6 +72,16 @@ class GameServer:
 
         with open(HIGHSCORE_FILE, "w") as outfile:
             json.dump(self._highscores, outfile)
+
+        if self._highscores[0] == (self.current_player.name, score):
+            open("highScoreLevels.txt", 'w').close()
+            f1 = open("highScoreLevels.txt", 'a')
+            f2 = open("scoresTemp.txt", 'r')
+            data = f2.readlines()
+            for line in data:
+                f1.write(line)
+            f1.close()
+            f2.close()
 
     async def send_info(self, game_info: Dict[str, Any], highscores: bool = False):
         """Send game info to viewer and player."""
@@ -119,6 +130,7 @@ class GameServer:
 
         except websockets.exceptions.ConnectionClosed as closed_reason:
             logger.info("Client disconnected: %s", closed_reason)
+            open("scoresTemp.txt", 'w').close()
             if websocket in self.viewers:
                 self.viewers.remove(websocket)
 
@@ -127,7 +139,7 @@ class GameServer:
         while True:
             logger.info("Waiting for player")
             self.current_player = await self.players.get()
-
+            
             if self.current_player.ws.closed:
                 logger.error("<%s> disconnect while waiting", self.current_player.name)
                 continue
@@ -182,6 +194,7 @@ class GameServer:
                     logger.warning("Could not save score to server")
 
                 if self.current_player:
+                    os.remove("scoresTemp.txt") 
                     logger.info("Disconnecting <%s>", self.current_player.name)
                     await self.current_player.ws.close()
 
