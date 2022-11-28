@@ -3,7 +3,7 @@
 03 ooooCoooooCoAAooCoooooooooBBBooooooo 40
 04 EBBBooEooFooEAAFooooCCoooDDDoooooooo 1108
 05 BBBCCoooHIooAAHIooGDDooxGooooooooxoo 713
-06 oooooEoooooEAAoooEDBBBCCDoooooDooooo 29
+06 EoBBECCCAAoFDDoF 34 
 07 ooooooooooooooDGooooooDGooooBCEHAAooBCEHooooooFIooooooFIooooooFI 3501 
 08 ooooooooooooooEHooooCDEHoooBCDFIAAoBCDFIooooooGJooooooGJoooooooJ 34992 
 09 oooooooooooooDGJoooooDGJoooBCEHKAAoBCEHKoooooFILoooooFILoooooooo 168920 
