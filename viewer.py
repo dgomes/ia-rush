@@ -243,6 +243,7 @@ async def main_loop(queue):
 
             logger.info(state)
             grid = Map(state["grid"])
+            dimensions = Coordinates(*state["dimensions"])
             draw_blocks(dimensions, grid, state["cursor"], state["selected"] != "")
 
             cursor = Coordinates(*state["cursor"])
