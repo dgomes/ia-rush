@@ -97,6 +97,9 @@ class Map:
             new_pos = sum(pos, direction)
             self.grid[new_pos.y][new_pos.x] = piece
 
+        # New return value so we know that the movement was possible 
+        return True
+
     def test_win(self):
         """Test if player_car has crossed the left most column."""
         return any(
