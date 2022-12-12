@@ -107,7 +107,7 @@ def expand(node):
 class BFS:
 
     states = set()
-    size = 6
+    size = None
 
     def __init__(self, state):
 
@@ -166,12 +166,15 @@ class BFS:
 
 class DFS:
 
-    def __init__(self, state):
+    def __init__(self, state, size):
 
         # node = (parent, state, cars, action)
-        grid = get_grid(state, BFS.size)
+        grid = get_grid(state, size)
         cars = get_cars(grid)
         self.root = (None, state, cars, [None])
+
+        self.max_nodes = 100000
+        self.min_A_pos = 3
 
         BFS.states= {state}
     
@@ -182,15 +185,15 @@ class DFS:
         node = None
 
         # numero de nós a explorar
-        while open_nodes and num_nodes < 100000:
+        while open_nodes and num_nodes < self.max_nodes:
             num_nodes += 1
             node = open_nodes.popleft()
 
             new_nodes = []
             for new_node in expand(node):
                 # pos da primeiro eixo x do carro 
-                if node[2][0][1] < 3:
-                    if new_node[3][0] == 'A' and new_node[3][1] == 'd':
+                if node[2][0][1] < self.min_A_pos:
+                    if new_node[self.min_A_pos][0] == 'A' and new_node[self.min_A_pos][1] == 'd':
                         continue
                 new_nodes.append(new_node)
 

@@ -11,7 +11,7 @@ class Map_gen:
         self.p_o = 0
 
     
-    def update(self, size, p_car, p_x):
+    def update(self, size:int, p_car: int, p_x: int):
         self.size = size
         self.p_car = p_car
         self.p_x = p_x
@@ -25,7 +25,7 @@ class Map_gen:
     def generate(self):
         self.update(self.size, self.p_car, self.p_x)
         letters = ['A']
-        probs = ['o']*int(self.p_o) + ['x']*int(self.p_x) + ['car']*int(self.p_car)
+        probs = ['o']*self.p_o + ['x']*self.p_x + ['car']*self.p_car
 
         for y in range(self.size):
             for x in range(self.size):
@@ -69,7 +69,7 @@ class Map_gen:
 
     def scramble(self):
         BFS.size = self.size
-        dfs = DFS(str(self))
+        dfs = DFS(str(self),BFS.size)
         str_ = dfs.search()
         self.map = [[*str_[i:i+self.size]] for i in range(0, len(str_), self.size)]
 
