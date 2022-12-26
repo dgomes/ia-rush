@@ -20,7 +20,7 @@ LEVEL: Dict[int, Map] = {}
 class Game:
     """Main Class."""
 
-    def __init__(self, x: int = 6, y: int = 6) -> None:
+    def __init__(self, x: int = 8, y: int = 8) -> None:
         """Initialize Game."""
         logger.info("Game")
 
@@ -69,6 +69,9 @@ class Game:
         try:
             self.grid = self.levels[self.level]
             logger.info("NEXT LEVEL: %s", self.level)
+            self.dimensions = Coordinates(self.grid.grid_size, self.grid.grid_size)
+            self.cursor = Coordinates(self.dimensions.x // 2, self.dimensions.y // 2)
+            
         except KeyError:
             logger.info("No more levels... You WIN!")
             self.stop()
