@@ -9,7 +9,7 @@ from typing import Dict
 from common import Coordinates, Map, MapException
 
 logger = logging.getLogger("Game")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 GAME_SPEED = 10
 CRAZY_STEP = 10

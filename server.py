@@ -18,7 +18,7 @@ from websockets.legacy.protocol import WebSocketCommonProtocol
 from game import Game
 
 logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 wslogger = logging.getLogger("websockets")
 wslogger.setLevel(logging.WARN)
