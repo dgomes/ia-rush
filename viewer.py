@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import random
+import time
 
 import pygame
 import requests
@@ -181,10 +182,10 @@ async def main_loop(queue):
 
     game_speed = newgame_json["game_speed"]
     pygame.display.set_caption("Rush Hour")
-
+    step_count = 0
+    toc = time.perf_counter()
     while True:
         pygame.display.update()
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 pygame.quit()
@@ -192,6 +193,7 @@ async def main_loop(queue):
 
         try:
             state = json.loads(queue.get_nowait())
+            step_count += 1
             if "level" in state:
                 level = state["level"]
             if "score" in state:
@@ -247,11 +249,15 @@ async def main_loop(queue):
             draw_blocks(dimensions, grid, state["cursor"], state["selected"] != "")
 
             cursor = Coordinates(*state["cursor"])
-
+            tic = time.perf_counter()
+            minutes = int((tic-toc)//60)
+            seconds = (tic-toc)%60
             information = [
                 (f"LEVEL: {level}", 1, COLOR_MAP["info"]),
                 (f"SCORE: {score}", 2, COLOR_MAP["info"]),
                 (f"PIECE: {grid.get(cursor)}", 3, COLOR_MAP["info"]),
+                (f"TIME: {round(minutes, 2)}:{round(seconds,2)}", 4, COLOR_MAP["info"]),
+                (f"STEPS: {step_count}", 5, COLOR_MAP["info"]),
             ]
 
             for txt, line, color in information:
